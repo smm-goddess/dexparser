@@ -3,26 +3,29 @@ package items
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
-	"log"
 )
 
+/*
+ *	alignment 4 byte
+ */
 type StringIdItem struct {
-	StringDataOff uint32 // offset from the start of the file to the string data for this item. The offset should be to a location in the data section, and the data should be in the format specified by "string_data_item" below. There is no alignment requirement for the offset.
+	/*
+	 *offset from the start of the file to the string data for this item. The offset should be to a location in the data section,
+	 *and the data should be in the format specified by "string_data_item" below. There is no alignment requirement for the offset.
+	 */
+	StringDataOff uint32
+}
+
+func (item StringIdItem) GetOffset() uint32 {
+	return item.StringDataOff
 }
 
 func ParseStringIds(dexSource []byte, startPoint uint32, size uint32) (stringIds []StringIdItem) {
 	sz := uint32(binary.Size(&StringIdItem{}))
 	stringIds = make([]StringIdItem, size, size)
 	for i := uint32(0); i < size; i++ {
-		if i == 26 {
-			fmt.Printf("%x\n", dexSource[startPoint+sz*i:startPoint+sz*(i+1)])
-		}
 		var item StringIdItem
-		err := binary.Read(bytes.NewBuffer(dexSource[startPoint+sz*i:startPoint+sz*(i+1)]), binary.LittleEndian, &item)
-		if err != nil {
-			log.Fatal("read string ids error")
-		}
+		_ = binary.Read(bytes.NewBuffer(dexSource[startPoint+sz*i:startPoint+sz*(i+1)]), binary.LittleEndian, &item)
 		stringIds[i] = item
 	}
 	return
