@@ -23,13 +23,9 @@ type ProtoIdItem struct {
 	ParametersOff uint32
 }
 
-func ParseProtoIds(dexSource []byte, startPoint uint32, size uint32) (stringIds []ProtoIdItem) {
+func ParseProtoIds(dexSource []byte, startPoint uint32, size uint32) (protoIds []ProtoIdItem) {
 	sz := uint32(binary.Size(&ProtoIdItem{}))
-	stringIds = make([]ProtoIdItem, size, size)
-	for i := uint32(0); i < size; i++ {
-		var item ProtoIdItem
-		_ = binary.Read(bytes.NewBuffer(dexSource[startPoint+sz*i:startPoint+sz*(i+1)]), binary.LittleEndian, &item)
-		stringIds[i] = item
-	}
+	protoIds = make([]ProtoIdItem, size, size)
+	_ = binary.Read(bytes.NewBuffer(dexSource[startPoint:startPoint+sz*(size)]), binary.LittleEndian, &protoIds)
 	return
 }

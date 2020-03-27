@@ -23,10 +23,6 @@ func (item StringIdItem) GetOffset() uint32 {
 func ParseStringIds(dexSource []byte, startPoint uint32, size uint32) (stringIds []StringIdItem) {
 	sz := uint32(binary.Size(&StringIdItem{}))
 	stringIds = make([]StringIdItem, size, size)
-	for i := uint32(0); i < size; i++ {
-		var item StringIdItem
-		_ = binary.Read(bytes.NewBuffer(dexSource[startPoint+sz*i:startPoint+sz*(i+1)]), binary.LittleEndian, &item)
-		stringIds[i] = item
-	}
+	_ = binary.Read(bytes.NewBuffer(dexSource[startPoint:startPoint+sz*size]), binary.LittleEndian, &stringIds)
 	return
 }

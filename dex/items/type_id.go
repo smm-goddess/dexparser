@@ -19,11 +19,7 @@ type TypeIdItem struct {
 func ParseTypeIdIds(dexSource []byte, startPoint uint32, size uint32) (typeIds []TypeIdItem) {
 	sz := uint32(binary.Size(&StringIdItem{}))
 	typeIds = make([]TypeIdItem, size, size)
-	for i := uint32(0); i < size; i++ {
-		var item TypeIdItem
-		_ = binary.Read(bytes.NewBuffer(dexSource[startPoint+sz*i:startPoint+sz*(i+1)]), binary.LittleEndian, &item)
-		typeIds[i] = item
-	}
+	_ = binary.Read(bytes.NewBuffer(dexSource[startPoint:startPoint+sz*size]), binary.LittleEndian, &typeIds)
 	return
 }
 
