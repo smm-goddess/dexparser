@@ -8,6 +8,9 @@ const (
 )
 
 const (
+	/*
+		判断可以用异或，相同为0，不同为1
+	*/
 	ACC_PUBLIC                = 0x1
 	ACC_PRIVATE               = 0x2
 	ACC_PROTECTED             = 0x4
