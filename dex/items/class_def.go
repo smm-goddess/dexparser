@@ -1,5 +1,10 @@
 package items
 
+import (
+	"bytes"
+	"encoding/binary"
+)
+
 /*
 alignment: 4 bytes
 */
@@ -52,4 +57,11 @@ type ClassDefItem struct {
 		are initialized with a type-appropriate 0 or null.
 	*/
 	StaticValuesOff uint32
+}
+
+func ParseClassDefs(dexSource []byte, startPoint uint32, size uint32) (classDefs []ClassDefItem, err error) {
+	sz := uint32(binary.Size(&ClassDefItem{}))
+	classDefs = make([]ClassDefItem, size, size)
+	err = binary.Read(bytes.NewBuffer(dexSource[startPoint:startPoint+sz*size]), binary.LittleEndian, &classDefs)
+	return
 }

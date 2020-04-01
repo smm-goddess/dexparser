@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	dexPath = "F:/AndroidStudioProjects/MyApplication/app/build/outputs/apk/app-debug/classes.dex"
+	//dexPath = "F:/AndroidStudioProjects/MyApplication/app/build/outputs/apk/app-debug/classes.dex"
+	//dexPath = "/home/neal/classes.dex"
+	dexPath = "/home/neal/work/apks/classes.dex"
 )
 
 func main() {
