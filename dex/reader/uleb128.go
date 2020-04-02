@@ -1,6 +1,6 @@
 package reader
 
-func ReadUnsignedLeb128(source []byte) (result uint32, readCount int) {
+func ReadUnsignedLeb128(source []byte) (result uint32, readCount uint32) {
 	result, readCount = uint32(source[0]), 1
 	if result > 0x7f {
 		cur := uint32(source[1])

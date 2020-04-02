@@ -1,30 +1,9 @@
 package items
 
-type EncodedAnnotation struct {
-	/*
-		type of the annotation. This must be a class (not array or primitive) type.
-	*/
-	TypeIdx uint32
-	/*
-		number of name-value mappings in this annotation
-	*/
-	Size uint32
-	/*
-		elements of the annotation, represented directly in-line (not as offsets). Elements must be sorted in increasing order by string_id index.
-	*/
-	Elements []AnnotationElement
-}
-
-type AnnotationElement struct {
-	/*
-		element name, represented as an index into the string_ids section. The string must conform to the syntax for MemberName, defined above.
-	*/
-	NameIdx uint32
-	/*
-		element value
-	*/
-	Value EncodedValue
-}
+import (
+	"bytes"
+	"encoding/binary"
+)
 
 type AnnotationsDirectoryItem struct {
 	/*
@@ -48,6 +27,23 @@ type AnnotationsDirectoryItem struct {
 	FieldAnnotations        []FieldAnnotation
 	MethodAnnotations       []MethodAnnotation
 	ParameterAnnotation     []ParameterAnnotation
+}
+
+func ReadAnnotationDirectory(dexBytes []byte, offSet uint32) AnnotationsDirectoryItem {
+	var classAnnotationOff, fieldsSize, annotationMethodSize, annotatedParametersSize uint32
+	_ = binary.Read(bytes.NewBuffer(dexBytes[offSet:]), binary.LittleEndian, &classAnnotationOff)
+	_ = binary.Read(bytes.NewBuffer(dexBytes[offSet+4:]), binary.LittleEndian, &fieldsSize)
+	_ = binary.Read(bytes.NewBuffer(dexBytes[offSet+8:]), binary.LittleEndian, &annotationMethodSize)
+	_ = binary.Read(bytes.NewBuffer(dexBytes[offSet+12:]), binary.LittleEndian, &annotatedParametersSize)
+	return AnnotationsDirectoryItem{
+		ClassAnnotationsOff:     classAnnotationOff,
+		FieldsSize:              fieldsSize,
+		AnnotatedMethodsSize:    annotationMethodSize,
+		AnnotatedParametersSize: annotatedParametersSize,
+		FieldAnnotations:        nil,
+		MethodAnnotations:       nil,
+		ParameterAnnotation:     nil,
+	}
 }
 
 type FieldAnnotation struct {
@@ -102,34 +98,4 @@ type AnnotationSetRefItem struct {
 		The offset, if non-zero, should be to a location in the data section. The format of the data is specified by "annotation_set_item" below.
 	*/
 	AnnotationsOff uint32
-}
-
-type AnnotationSetItem struct {
-	/*
-		size of the set, in entries
-	*/
-	Size uint32
-	/*
-		elements of the set. The elements must be sorted in increasing order, by type_idx.
-	*/
-	Entries []AnnotationOffItem
-}
-
-type AnnotationOffItem struct {
-	/*
-		offset from the start of the file to an annotation. The offset should be to a location in the data section,
-		and the format of the data at that location is specified by "annotation_item" below.
-	*/
-	AnnotationOff uint32
-}
-
-type AnnotationItem struct {
-	/*
-		intended visibility of this annotation (see below)
-	*/
-	Visibility uint8
-	/*
-		encoded annotation contents, in the format described by "encoded_annotation format" under "encoded_value encoding" above.
-	*/
-	Annotation EncodedAnnotation
 }

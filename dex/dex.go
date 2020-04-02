@@ -73,63 +73,83 @@ func ParseDexFile(dexBytes []byte) {
 	/*
 		parse method ids
 	*/
-	fmt.Println("---------- Parse MethodId -----------")
-	methodIds, _ := ParseMethodIds(dexBytes, header.MethodIdsOff, header.MethodIdsSize)
-	methodId := methodIds[5]
-	// ClassIndex
-	class := Descriptor2Class(ReadStringData(dexBytes, stringIds[typeIds[methodId.ClassIdx].DescriptorIdx]).Data)
-	// ProtoIndex
-	protoId = protoIds[methodId.ProtoIdx]
-	returnTypeIdx = stringIds[typeIds[protoId.ReturnTypeIdx].DescriptorIdx]
-	returnTypeString = ReadStringData(dexBytes, returnTypeIdx)
-	shortyIdx = stringIds[protoId.ShortyIdx]
-	shortyStr = ReadStringData(dexBytes, shortyIdx)
-	paramBuffer = bytes.Buffer{}
-	paramBuffer.WriteByte('(')
-	if protoId.ParametersOff > 0 {
-		for _, i := range ReadTypeList(dexBytes, protoId.ParametersOff).List {
-			item := ReadStringData(dexBytes, stringIds[typeIds[i].DescriptorIdx])
-			paramBuffer.WriteString(Descriptor2Class(item.Data))
-			paramBuffer.WriteByte(',')
+	var showMethod = func(id uint32) {
+		fmt.Println("---------- Parse MethodId -----------")
+		methodIds, _ := ParseMethodIds(dexBytes, header.MethodIdsOff, header.MethodIdsSize)
+		methodId := methodIds[id]
+		// ClassIndex
+		class := Descriptor2Class(ReadStringData(dexBytes, stringIds[typeIds[methodId.ClassIdx].DescriptorIdx]).Data)
+		// ProtoIndex
+		protoId = protoIds[methodId.ProtoIdx]
+		returnTypeIdx = stringIds[typeIds[protoId.ReturnTypeIdx].DescriptorIdx]
+		returnTypeString = ReadStringData(dexBytes, returnTypeIdx)
+		shortyIdx = stringIds[protoId.ShortyIdx]
+		shortyStr = ReadStringData(dexBytes, shortyIdx)
+		paramBuffer = bytes.Buffer{}
+		paramBuffer.WriteByte('(')
+		if protoId.ParametersOff > 0 {
+			for _, i := range ReadTypeList(dexBytes, protoId.ParametersOff).List {
+				item := ReadStringData(dexBytes, stringIds[typeIds[i].DescriptorIdx])
+				paramBuffer.WriteString(Descriptor2Class(item.Data))
+				paramBuffer.WriteByte(',')
+			}
+			paramBuffer.Truncate(paramBuffer.Len() - 1)
 		}
-		paramBuffer.Truncate(paramBuffer.Len() - 1)
+		paramBuffer.WriteByte(')')
+		//
+		name := string(ReadStringData(dexBytes, stringIds[methodId.NameIdx]).Data)
+		fmt.Printf("%s %s.%s %s\n", Descriptor2Class(returnTypeString.Data), class, name, paramBuffer.String())
+		fmt.Println("---------- Parse MethodId End-----------", "\n")
 	}
-	paramBuffer.WriteByte(')')
-	//
-	name := string(ReadStringData(dexBytes, stringIds[methodId.NameIdx]).Data)
-	fmt.Printf("%s %s.%s %s\n", Descriptor2Class(returnTypeString.Data), class, name, paramBuffer.String())
-	fmt.Println("---------- Parse MethodId End-----------\n")
+	showMethod(5)
 
 	/*
 		class def
 	*/
 	fmt.Println("---------- Parse Class Def -----------")
 	classDefs, _ := ParseClassDefs(dexBytes, header.ClassDefsOff, header.ClassDefsSize)
-	fmt.Println(len(classDefs))
 	classDef := classDefs[1]
-	fmt.Println(getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, classDef.ClassIdx))
-	fmt.Println(consts.GetAccessFlagsString(classDef.AccessFlags))
+	fmt.Println("Class Type:", getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, classDef.ClassIdx))
+	fmt.Println("Access Flags:", consts.GetAccessFlagsString(classDef.AccessFlags))
 	if classDef.SuperClassIdx == consts.NO_INDEX {
 		// it's a root class such as java.lang.Object
 	} else {
-		fmt.Println("superClass:" + getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, classDef.SuperClassIdx))
+		fmt.Println("superClass:", getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, classDef.SuperClassIdx))
 	}
 	if classDef.InterfaceOff == 0 {
 		// no interface implements
 	} else {
 		interfaceItems := ReadTypeList(dexBytes, classDef.InterfaceOff)
 		for _, item := range interfaceItems.List {
-			fmt.Println("interface:" + getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, uint32(item)))
+			fmt.Println("Interface:" + getTypeStringBasedOnTypeIdIndex(dexBytes, stringIds, typeIds, uint32(item)))
 		}
 	}
 	if classDef.SourceFileIdx == consts.NO_INDEX {
 		// no source file
 	} else {
-		fmt.Println("source file:" + getStringBasedOnStringId(dexBytes, stringIds, classDef.SourceFileIdx))
+		fmt.Println("Source File:" + getStringBasedOnStringId(dexBytes, stringIds, classDef.SourceFileIdx))
 	}
 
 	if classDef.AnnotationOff == 0 {
 		// no annotations on this class
+	} else {
+		annotationDirectoryItem := ReadAnnotationDirectory(dexBytes, classDef.AnnotationOff)
+		annotationSetItem := ReadAnnotationSetItem(dexBytes, annotationDirectoryItem.ClassAnnotationsOff)
+		fmt.Println(ReadAnnotationItem(dexBytes, annotationSetItem.Entries[0].AnnotationOff))
+	}
+
+	if classDef.ClassDataOff == 0 {
+		// no data for this class
+	} else {
+		classData := ParseClassData(dexBytes, classDef.ClassDataOff)
+		virtualMethod := classData.VirtualMethods[0]
+		fmt.Println(virtualMethod)
+		showMethod(virtualMethod.MethodIdxDiff)
+		fmt.Println(consts.GetAccessFlagsString(virtualMethod.AccessFlags))
+		fmt.Println("Code Off:", virtualMethod.CodeOff)
+	}
+	if classDef.StaticValuesOff == 0 {
+		// no static value
 	} else {
 
 	}

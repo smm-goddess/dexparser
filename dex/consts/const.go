@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	HEADER_SIZE                    = 0X70
+	HEADER_SIZE                    = 0x70
 	ENDIAN_CONSTANT         uint32 = 0x12345678
 	REVERSE_ENDIAN_CONSTANT uint32 = 0x78563412
 	NO_INDEX                uint32 = 0xffffffff // == -1 if treated as a signed int
@@ -42,7 +42,7 @@ const (
 	ACC_METHOD_MASK      = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_STATIC | ACC_FINAL | ACC_SYNCHRONIZED | ACC_BRIDGE | ACC_VARARGS | ACC_NATIVE | ACC_ABSTRACT | ACC_STRICT | ACC_SYNTHETIC | ACC_CONSTRUCTOR | ACC_DECLARED_SYNCHRONIZED
 )
 
-var accFlagMap = map[int]string{
+var accFlagMap = map[uint32]string{
 	0x1:     "ACC_PUBLIC",
 	0x2:     "ACC_PRIVATE",
 	0x4:     "ACC_PROTECTED",
@@ -62,15 +62,17 @@ var accFlagMap = map[int]string{
 	0x20000: "ACC_DECLARED_SYNCHRONIZED",
 }
 
+var keys = []uint32{0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x10000, 0x20000}
+
 func isLocBit1(bit uint32, bitLoc uint8) bool {
 	return (bit>>(bitLoc-1))&1 == 1
 }
 
 func GetAccessFlagsString(flag uint32) string {
 	flags := make([]string, 0)
-	for i := uint8(0); i < 19; i++ {
-		if isLocBit1(flag, i) {
-			flags = append(flags, accFlagMap[1<<i])
+	for i := 0; i < len(keys); i++ {
+		if flag&keys[i] == keys[i] {
+			flags = append(flags, accFlagMap[keys[i]])
 		}
 	}
 	if len(flags) > 0 {
